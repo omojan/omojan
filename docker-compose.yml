@@ -1,0 +1,68 @@
+version: '3.8'
+services:
+  dev-postgres:
+    image: postgres:14.4-alpine
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: develop
+      POSTGRES_PASSWORD: develop
+      POSTGRES_DB: develop
+    restart: always
+    networks:
+      - omojan
+networks:
+  omojan:
+
+#   version: "3.8"
+# services:
+#   backend:
+#     build:
+#       context: .
+#       dockerfile: ./docker/backend/Dockerfile
+#     tty: true
+#     command: bash -c "yarn start:dev"
+#     volumes:
+#       - type: bind
+#         source: ./backend
+#         target: /api
+#     environment:
+#       - WATCHPACK_POLLING=true
+#     ports:
+#       - "8000:8000"
+#       # - "5555:5555"
+#     networks:
+#       - nest-next
+
+#   frontend:
+#     build:
+#       context: .
+#       dockerfile: ./docker/frontend/Dockerfile
+#     tty: true
+#     command: bash -c "yarn dev"
+#     volumes:
+#       - type: bind
+#         source: ./frontend
+#         target: /app
+#     environment:
+#       - WATCHPACK_POLLING=true
+#     ports:
+#       - "3000:3000"
+#     networks:
+#       - nest-next
+
+#   postgres:
+#     image: postgres:15.2-alpine
+#     ports:
+#       - 5434:5432
+#     environment:
+#       POSTGRES_USER: develop
+#       POSTGRES_PASSWORD: develop
+#       POSTGRES_DB: develop
+#     restart: always
+#     networks:
+#       - nest-next
+
+# networks:
+#   nest-next: 
+#     driver: bridge
