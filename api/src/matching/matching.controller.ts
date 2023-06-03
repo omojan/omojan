@@ -21,8 +21,9 @@ import { RestGuard } from 'src/auth/guards/rest.guard';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Matching, User } from '@prisma/client';
 import { Observable, concatMap, interval, map } from 'rxjs';
-import { MatchingIdResponseType } from './types/matching.type';
+import { MatchingIdResponseType, MatchingInPlayers, MatchingInPlayersAndRule } from './types/matching.type';
 import { MessageType } from './types/util.type';
+import { decode } from 'next-auth/jwt';
 
 @Controller('matching')
 @UseGuards(RestGuard)
@@ -33,16 +34,22 @@ export class MatchingController {
   ) {}
 
   @Sse('list')
-  observableFindAll(): Observable<MessageEvent> {
+  observableFindAll(): Observable<MessageEvent<MatchingInPlayers[]>> {
     return this.matchingService.observableFindAll();
   }
 
-  @Sse('participant')
-  observableFindPlayers(@Req() req: Request): Observable<MessageEvent<User[]>> {
-    return this.matchingService.observableFindPlayers(
-      req.cookies['next-auth.session-token'],
-    );
+  @Sse(':id/participant')
+  observableFindPlayers(
+    @Req() @Param('id') id: string,
+  ): Observable<MessageEvent<User[]>> {
+    return this.matchingService.observableFindPlayers(id);
   }
+  // @Sse('participant')
+  // observableFindPlayers(@Req() req: Request): Observable<MessageEvent<User[]>> {
+  //   return this.matchingService.observableFindPlayers(
+  //     req.cookies['next-auth.session-token'],
+  //   );
+  // }
 
   @Post()
   create(
@@ -53,12 +60,12 @@ export class MatchingController {
   }
 
   @Get()
-  findAll(): Promise<Matching[]> {
+  findAll(): Promise<MatchingInPlayers[]> {
     return this.matchingService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Matching> {
+  findOne(@Param('id') id: string): Promise<MatchingInPlayersAndRule> {
     return this.matchingService.findOne(id);
   }
 

@@ -37,6 +37,7 @@ CREATE TABLE "User" (
     "email" TEXT,
     "emailVerified" TIMESTAMP(3),
     "image" TEXT,
+    "hostMatchingId" TEXT,
     "joinMatchingId" TEXT,
     "gameId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +61,6 @@ CREATE TABLE "Matching" (
     "name" TEXT NOT NULL,
     "password" TEXT,
     "isRecruiting" BOOLEAN NOT NULL DEFAULT true,
-    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -70,8 +70,7 @@ CREATE TABLE "Matching" (
 -- CreateTable
 CREATE TABLE "Game" (
     "id" TEXT NOT NULL,
-    "ruleId" TEXT NOT NULL,
-    "gameId" TEXT NOT NULL,
+    "matchingId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -85,6 +84,7 @@ CREATE TABLE "Rule" (
     "playerCount" INTEGER NOT NULL,
     "turnCount" INTEGER NOT NULL,
     "matchingId" TEXT NOT NULL,
+    "gameId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -101,22 +101,22 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_hostMatchingId_key" ON "User"("hostMatchingId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Matching_userId_key" ON "Matching"("userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Game_ruleId_key" ON "Game"("ruleId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Game_gameId_key" ON "Game"("gameId");
+CREATE UNIQUE INDEX "Game_matchingId_key" ON "Game"("matchingId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Rule_matchingId_key" ON "Rule"("matchingId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Rule_gameId_key" ON "Rule"("gameId");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -125,19 +125,19 @@ ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_hostMatchingId_fkey" FOREIGN KEY ("hostMatchingId") REFERENCES "Matching"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_joinMatchingId_fkey" FOREIGN KEY ("joinMatchingId") REFERENCES "Matching"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "User" ADD CONSTRAINT "User_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Matching" ADD CONSTRAINT "Matching_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Game" ADD CONSTRAINT "Game_matchingId_fkey" FOREIGN KEY ("matchingId") REFERENCES "Matching"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Game" ADD CONSTRAINT "Game_ruleId_fkey" FOREIGN KEY ("ruleId") REFERENCES "Rule"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Rule" ADD CONSTRAINT "Rule_matchingId_fkey" FOREIGN KEY ("matchingId") REFERENCES "Matching"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Game" ADD CONSTRAINT "Game_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Matching"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Rule" ADD CONSTRAINT "Rule_matchingId_fkey" FOREIGN KEY ("matchingId") REFERENCES "Matching"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Rule" ADD CONSTRAINT "Rule_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE;

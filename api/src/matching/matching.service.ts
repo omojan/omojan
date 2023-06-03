@@ -1,6 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMatchingDto } from './dto/create-matching.dto';
-import { MatchingIdResponseType } from './types/matching.type';
+import {
+  MatchingIdResponseType,
+  MatchingInPlayers,
+  MatchingInPlayersAndRule,
+} from './types/matching.type';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Matching, User } from '@prisma/client';
@@ -15,34 +19,23 @@ export class MatchingService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  observableFindAll(): Observable<MessageEvent<Matching[]>> {
-    return interval(1000)
-      .pipe(concatMap(() => this.prismaService.matching.findMany()))
-      .pipe(map((matchings) => ({ data: matchings } as MessageEvent)));
-  }
-  observableFindPlayers(token: string): Observable<MessageEvent<User[]>> {
+  observableFindAll(): Observable<MessageEvent<MatchingInPlayers[]>> {
     return interval(1000)
       .pipe(
         concatMap(() =>
-          decode({
-            token,
-            secret: this.configService.get('NEXTAUTH_SECRET'),
-          }),
+          this.prismaService.matching.findMany({ include: { players: true } }),
         ),
       )
-      .pipe(
-        concatMap((decodeUser) =>
-          this.prismaService.user.findUnique({
-            where: { id: decodeUser.sub },
-          }),
-        ),
-      )
+      .pipe(map((matchings) => ({ data: matchings } as MessageEvent)));
+  }
+  observableFindPlayers(id: string): Observable<MessageEvent<User[]>> {
+    return interval(1000)
       .pipe(
         concatMap(
-          (user) =>
+          () =>
             this.prismaService.matching.findUnique({
               where: {
-                id: user.joinMatchingId,
+                id: id,
               },
               include: {
                 players: true,
@@ -60,7 +53,12 @@ export class MatchingService {
           // }),
         ),
       )
-      .pipe(map((users) => ({ data: users.players } as MessageEvent)));
+      .pipe(
+        map(
+          (matching: MatchingInPlayers) =>
+            ({ data: matching.players } as MessageEvent),
+        ),
+      );
   }
 
   async create(
@@ -73,15 +71,15 @@ export class MatchingService {
         password: dto.password,
         hostUser: {
           connect: {
-            id:userId
-          }
+            id: userId,
+          },
         },
         rule: {
           create: {
             timeLimit: dto.timeLimit,
-            playerCount: dto.turnCount,
+            playerCount: dto.playerCount,
             turnCount: dto.turnCount,
-          }
+          },
         },
         players: {
           connect: {
@@ -93,14 +91,21 @@ export class MatchingService {
     return { matchingId: matching.id };
   }
 
-  findAll(): Promise<Matching[]> {
-    return this.prismaService.matching.findMany();
+  findAll(): Promise<MatchingInPlayers[]> {
+    return this.prismaService.matching.findMany({
+      include: { players: true, hostUser: true },
+    });
   }
 
-  findOne(id: string): Promise<Matching> {
+  findOne(id: string): Promise<MatchingInPlayersAndRule> {
     return this.prismaService.matching.findUnique({
       where: {
         id: id,
+      },
+      include: {
+        players: true,
+        hostUser: true,
+        rule: true,
       },
     });
   }
@@ -112,7 +117,7 @@ export class MatchingService {
       },
       include: {
         players: true,
-        rule: true
+        rule: true,
       },
     });
     if (matching.players.length >= matching.rule.playerCount) {
