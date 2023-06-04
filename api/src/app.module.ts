@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { MatchingModule } from './matching/matching.module';
+import { GameModule } from './game/game.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MatchingModule } from './matching/matching.module';
     PrismaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     MatchingModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -21,7 +21,12 @@ import { RestGuard } from 'src/auth/guards/rest.guard';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Matching, User } from '@prisma/client';
 import { Observable, concatMap, interval, map } from 'rxjs';
-import { MatchingIdResponseType, MatchingInPlayers, MatchingInPlayersAndRule } from './types/matching.type';
+import {
+  MatchingIdResponse,
+  MatchingInPlayers,
+  MatchingInPlayersAndRule,
+  MatchingInPlayersAndGame,
+} from './types/matching.type';
 import { MessageType } from './types/util.type';
 import { decode } from 'next-auth/jwt';
 
@@ -34,15 +39,15 @@ export class MatchingController {
   ) {}
 
   @Sse('list')
-  observableFindAll(): Observable<MessageEvent<MatchingInPlayers[]>> {
+  observableFindAll(): Observable<MessageEvent<MatchingInPlayersAndRule[]>> {
     return this.matchingService.observableFindAll();
   }
 
   @Sse(':id/participant')
-  observableFindPlayers(
+  observableFindPlayersAndGame(
     @Req() @Param('id') id: string,
-  ): Observable<MessageEvent<User[]>> {
-    return this.matchingService.observableFindPlayers(id);
+  ): Observable<MessageEvent<MatchingInPlayersAndGame[]>> {
+    return this.matchingService.observableFindPlayersAndGame(id);
   }
   // @Sse('participant')
   // observableFindPlayers(@Req() req: Request): Observable<MessageEvent<User[]>> {
@@ -55,12 +60,12 @@ export class MatchingController {
   create(
     @Req() req: Request,
     @Body() dto: CreateMatchingDto,
-  ): Promise<MatchingIdResponseType> {
+  ): Promise<MatchingIdResponse> {
     return this.matchingService.create(req.user.id, dto);
   }
 
   @Get()
-  findAll(): Promise<MatchingInPlayers[]> {
+  findAll(): Promise<MatchingInPlayersAndRule[]> {
     return this.matchingService.findAll();
   }
 
@@ -81,13 +86,11 @@ export class MatchingController {
   closeMatching(@Param('id') id: string): Promise<MessageType> {
     return this.matchingService.closeMatching(id);
   }
+  // @Patch(':id/success')
+  // success(@Param('id') id: string): Promise<MessageType> {}
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.prismaService.matching.delete({
-      where: {
-        id: id,
-      },
-    });
+  remove(@Param('id') id: string): Promise<MessageType> {
+    return this.matchingService.remove(id);
   }
 }
