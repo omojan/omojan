@@ -44,14 +44,14 @@ model User {
   image         String?
   hostMatchingId  String? @unique
   joinMatchingId  String? 
-  gameId        String?
+  // gameId        String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now()) @updatedAt
   accounts      Account[]
   sessions      Session[]
   hostMatching  Matching?  @relation("hostUser", fields: [hostMatchingId], references: [id])
   joinMatching  Matching? @relation("players", fields: [joinMatchingId], references: [id])
-  game          Game?      @relation(fields: [gameId], references: [id])
+  // game          Game?      @relation(fields: [gameId], references: [id])
 }
 
 model VerificationToken {
@@ -82,9 +82,9 @@ model Game {
   matchingId      String   @unique
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @default(now()) @updatedAt
-  rule        Rule?
+  // rule        Rule?
   matching    Matching   @relation(fields: [matchingId], references: [id], onDelete: Cascade)
-  players     User[]
+  // players     User[]
 }
 
 
@@ -94,11 +94,11 @@ model Rule {
   playerCount Int
   turnCount   Int
   matchingId  String      @unique
-  gameId      String?          @unique
+  // gameId      String?          @unique
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @default(now()) @updatedAt
   matching    Matching   @relation(fields: [matchingId], references: [id], onDelete: Cascade)
-  game        Game?       @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  // game        Game?       @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 // generator client {
 //   provider = "prisma-client-js"

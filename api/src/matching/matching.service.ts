@@ -1,8 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMatchingDto } from './dto/create-matching.dto';
 import {
-  MatchingIdResponseType,
+  MatchingIdResponse,
   MatchingInPlayers,
+  MatchingInPlayersAndGame,
   MatchingInPlayersAndRule,
 } from './types/matching.type';
 import { ConfigService } from '@nestjs/config';
@@ -19,16 +20,24 @@ export class MatchingService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  observableFindAll(): Observable<MessageEvent<MatchingInPlayers[]>> {
+  observableFindAll(): Observable<MessageEvent<MatchingInPlayersAndRule[]>> {
     return interval(1000)
       .pipe(
         concatMap(() =>
-          this.prismaService.matching.findMany({ include: { players: true } }),
+          this.prismaService.matching.findMany({
+            include: {
+              players: true,
+              hostUser: true,
+              rule: true,
+            },
+          }),
         ),
       )
       .pipe(map((matchings) => ({ data: matchings } as MessageEvent)));
   }
-  observableFindPlayers(id: string): Observable<MessageEvent<User[]>> {
+  observableFindPlayersAndGame(
+    id: string,
+  ): Observable<MessageEvent<MatchingInPlayersAndGame[]>> {
     return interval(1000)
       .pipe(
         concatMap(
@@ -39,6 +48,7 @@ export class MatchingService {
               },
               include: {
                 players: true,
+                game: true,
               },
             }),
           // .catch((error) => {
@@ -55,8 +65,10 @@ export class MatchingService {
       )
       .pipe(
         map(
-          (matching: MatchingInPlayers) =>
-            ({ data: matching.players } as MessageEvent),
+          (matching) =>
+            ({
+              data: { players: matching.players, game: matching.game },
+            } as MessageEvent),
         ),
       );
   }
@@ -64,7 +76,7 @@ export class MatchingService {
   async create(
     userId: string,
     dto: CreateMatchingDto,
-  ): Promise<MatchingIdResponseType> {
+  ): Promise<MatchingIdResponse> {
     const matching = await this.prismaService.matching.create({
       data: {
         name: dto.name,
@@ -91,9 +103,9 @@ export class MatchingService {
     return { matchingId: matching.id };
   }
 
-  findAll(): Promise<MatchingInPlayers[]> {
+  findAll(): Promise<MatchingInPlayersAndRule[]> {
     return this.prismaService.matching.findMany({
-      include: { players: true, hostUser: true },
+      include: { players: true, hostUser: true, rule: true },
     });
   }
 
@@ -164,10 +176,24 @@ export class MatchingService {
       },
       data: {
         isRecruiting: false,
+        game: { create: {} },
+      },
+      include: {
+        rule: true,
       },
     });
     return { message: 'ok' };
   }
+  // async success (id: string): Promise<MessageType> {
+  //   await this.prismaService.matching.update({
+  //     where: {
+  //       id
+  //     },
+  //     data: {
+
+  //     }
+  //   })
+  // }
   async remove(id: string): Promise<MessageType> {
     await this.prismaService.matching.delete({
       where: {

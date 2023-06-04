@@ -39,7 +39,6 @@ CREATE TABLE "User" (
     "image" TEXT,
     "hostMatchingId" TEXT,
     "joinMatchingId" TEXT,
-    "gameId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -84,7 +83,6 @@ CREATE TABLE "Rule" (
     "playerCount" INTEGER NOT NULL,
     "turnCount" INTEGER NOT NULL,
     "matchingId" TEXT NOT NULL,
-    "gameId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -115,9 +113,6 @@ CREATE UNIQUE INDEX "Game_matchingId_key" ON "Game"("matchingId");
 -- CreateIndex
 CREATE UNIQUE INDEX "Rule_matchingId_key" ON "Rule"("matchingId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Rule_gameId_key" ON "Rule"("gameId");
-
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -131,13 +126,7 @@ ALTER TABLE "User" ADD CONSTRAINT "User_hostMatchingId_fkey" FOREIGN KEY ("hostM
 ALTER TABLE "User" ADD CONSTRAINT "User_joinMatchingId_fkey" FOREIGN KEY ("joinMatchingId") REFERENCES "Matching"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Game" ADD CONSTRAINT "Game_matchingId_fkey" FOREIGN KEY ("matchingId") REFERENCES "Matching"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Rule" ADD CONSTRAINT "Rule_matchingId_fkey" FOREIGN KEY ("matchingId") REFERENCES "Matching"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Rule" ADD CONSTRAINT "Rule_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,29 +1,37 @@
-import { MatchingOptionType } from "@/types/matchingType";
-import { Button, Modal, Text } from "@nextui-org/react";
+import { MatchingOption } from "@/types/matchingType";
+import { Button, Modal, Text, useModal } from "@nextui-org/react";
 import { useRouter } from "next/router";
 import { Dispatch, ReactNode, SetStateAction, useState } from "react";
 
 type Props = {
 	children: ReactNode;
-	matchingOption: MatchingOptionType;
-	setMatchingOption: Dispatch<SetStateAction<MatchingOptionType>>;
+	matchingOption: MatchingOption;
+	setMatchingOption: Dispatch<SetStateAction<MatchingOption>>;
 };
 
 export default function CreateMatchingModal(props: Props) {
 	const router = useRouter();
-	const [isOpen, setIsOpen] = useState(false);
+	const { setVisible, bindings } = useModal();
+	// const [isOpen, setIsOpen] = useState(false);
 
-	function open() {
-		setIsOpen(true);
-	}
-	function close() {
-		setIsOpen(false);
-	}
+	// function open() {
+	// 	setIsOpen(true);
+	// }
+	// function close() {
+	// 	setIsOpen(false);
+	// }
+
 	async function createMatching() {
-		if (props.matchingOption.isLock && !props.matchingOption.password) {
-			props.setMatchingOption((prev) => ({ ...prev, error: true }));
+		if (!props.matchingOption.name || (props.matchingOption.isLock && !props.matchingOption.password)) {
+			if (!props.matchingOption.name) {
+				props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, name: true } }));
+			}
+			if (props.matchingOption.isLock && !props.matchingOption.password) {
+				props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, password: true } }));
+			}
 			return;
 		}
+
 		try {
 			const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching`, {
 				method: "POST",
@@ -32,12 +40,11 @@ export default function CreateMatchingModal(props: Props) {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					// ...props.matchingOption,
 					name: props.matchingOption.name,
 					timeLimit: props.matchingOption.timeLimit,
 					playerCount: props.matchingOption.playerCount,
 					turnCount: props.matchingOption.turnCount,
-					password: props.matchingOption.password
+					password: props.matchingOption.password,
 				}),
 			});
 			const result = await res.json();
@@ -48,15 +55,15 @@ export default function CreateMatchingModal(props: Props) {
 	}
 	return (
 		<>
-			<Button auto size='lg' rounded onPress={open}>
+			<Button auto size="lg" rounded onPress={() => setVisible(true)}>
+				{/* <Button auto size='lg' rounded onPress={open}> */}
 				部屋を作成する
 			</Button>
-			<Modal closeButton  open={isOpen} onClose={close}>
-				{/* <Modal closeButton scroll aria-labelledby="modal-title" open={isOpen} onClose={close}> */}
+			<Modal closeButton {...bindings}>
+				{/* <Modal closeButton  open={isOpen} onClose={close}> */}
 				<form onSubmit={createMatching}>
 					<Modal.Header>
 						<Text h2 size="$xl">
-							{/* <Text id="modal-title" h2 size="$xl"> */}
 							ルール設定
 						</Text>
 					</Modal.Header>

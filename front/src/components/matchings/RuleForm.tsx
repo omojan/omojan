@@ -1,27 +1,16 @@
-import { MatchingOptionType } from "@/types/matchingType";
-import {
-	Dropdown,
-	Input,
-	Progress,
-	Radio,
-	Spacer,
-	Switch,
-	Text,
-	Row,
-	Col,
-	Grid,
-	FormElement,
-	Loading,
-} from "@nextui-org/react";
-import { ChangeEvent, Dispatch, MouseEvent, SetStateAction, useEffect, useMemo, useState } from "react";
+// import { MatchingOption } from "@/types/matchingType";
+import { MatchingOption } from "@/types/matchingType";
+import { Input, Radio, Spacer, Switch, FormElement } from "@nextui-org/react";
+import { ChangeEvent, Dispatch, SetStateAction } from "react";
 
 type Props = {
-	matchingOption: MatchingOptionType;
-	setMatchingOption: Dispatch<SetStateAction<MatchingOptionType>>;
+	matchingOption: MatchingOption;
+	setMatchingOption: Dispatch<SetStateAction<MatchingOption>>;
 };
 export default function RuleForm(props: Props) {
 	function handleName(e: ChangeEvent<FormElement>) {
 		props.setMatchingOption((prev) => ({ ...prev, name: e.target.value }));
+		props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, name: false } }));
 	}
 	function handleTimeLimit(value: string) {
 		props.setMatchingOption((prev) => ({ ...prev, timeLimit: Number(value) }));
@@ -34,18 +23,30 @@ export default function RuleForm(props: Props) {
 	}
 	function lockToggle() {
 		props.setMatchingOption((prev) => ({ ...prev, isLock: !prev.isLock }));
-		props.setMatchingOption((prev) => ({ ...prev, error: false }));
+		props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, password: false } }));
 	}
 	function handlePassword(e: ChangeEvent<FormElement>) {
 		props.setMatchingOption((prev) => ({ ...prev, password: e.target.value }));
-		props.setMatchingOption((prev) => ({ ...prev, error: false }));
+		props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, password: false } }));
 	}
 
 	return (
 		<>
 			<Spacer />
-
 			<Input
+				required
+				clearable
+				bordered
+				rounded
+				color={props.matchingOption.errors.name ? "error" : "primary"}
+				label="部屋名*"
+				helperColor="error"
+				helperText={props.matchingOption.errors.name ? "名前は必須です" : ""}
+				value={props.matchingOption.name}
+				onChange={handleName}
+			/>
+			<Spacer />
+			{/* <Input
 				required
 				clearable
 				rounded
@@ -54,7 +55,7 @@ export default function RuleForm(props: Props) {
 				label="部屋名"
 				value={props.matchingOption.name}
 				onChange={handleName}
-			/>
+			/> */}
 
 			<Radio.Group
 				label="制限時間"
@@ -119,34 +120,26 @@ export default function RuleForm(props: Props) {
 				</Radio>
 			</Radio.Group>
 			<Spacer />
-
-			{/* <Grid.Container>
-				<Grid alignItems="center" css={{ display: "flex" }}>
-					<Text size="$md" color={props.matchingOption.isLock ? "primary" : "$gray800"}>
-						パスワードをかける
-					</Text>
-				</Grid>
-				<Spacer />
-				<Grid>
-					<Switch onChange={lockToggle} checked={props.matchingOption.isLock} />
-				</Grid>
-			</Grid.Container> */}
 			<Input.Password
 				clearable
-				bordered={!props.matchingOption.error || props.matchingOption.isLock}
+				bordered={!props.matchingOption.errors.password || props.matchingOption.isLock}
 				contentLeftStyling
 				disabled={!props.matchingOption.isLock}
 				rounded
-				color={props.matchingOption.error ? "error" : props.matchingOption.isLock ? "primary" : "default"}
-				label="パスワード"
+				color={
+					props.matchingOption.errors.password ? "error" : props.matchingOption.isLock ? "primary" : "default"
+				}
+				label={`パスワード${props.matchingOption.isLock ? "*" : ""}`}
 				helperColor="error"
-				helperText={props.matchingOption.error ? "パスワードを入力、またはパスワードをオフにしてください" : ""}
+				helperText={
+					props.matchingOption.errors.password ? "パスワードを入力、またはパスワードをオフにしてください" : ""
+				}
 				type="password"
 				contentLeft={
 					<Switch
 						css={{ marginBottom: "$2" }}
 						size="xs"
-						color={props.matchingOption.error ? "error" : "primary"}
+						color={props.matchingOption.errors.password ? "error" : "primary"}
 						onChange={lockToggle}
 						checked={props.matchingOption.isLock}
 					/>
@@ -155,12 +148,6 @@ export default function RuleForm(props: Props) {
 				onChange={handlePassword}
 			/>
 			<Spacer />
-
-			{/* <Input.Password
-			bordered
-	// color="error"
-	color="success"
-/> */}
 		</>
 	);
 }
