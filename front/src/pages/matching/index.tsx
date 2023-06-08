@@ -1,5 +1,5 @@
 import AuthGuard from "@/components/guards/AuthGuard";
-import { MatchingInPlayersAndRule } from "@/types/matchingType";
+import { MatchingInUsersAndHostAndRule } from "@/types/matchingType";
 import { Badge, Button, Card, Container, Modal, Spacer, Table, Text, User, useModal } from "@nextui-org/react";
 import { Matching } from "@prisma/client";
 import { GetServerSidePropsContext } from "next";
@@ -8,9 +8,10 @@ import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-	matchings: MatchingInPlayersAndRule[];
+	matchings: MatchingInUsersAndHostAndRule[];
 };
 export default function Matching(props: Props) {
+
 	const eventSourceRef = useRef<EventSource | null>(null);
 	const router = useRouter();
 	const [matchings, setMatchings] = useState(props.matchings);
@@ -31,7 +32,7 @@ export default function Matching(props: Props) {
 				if (res.status === 400) {
 					throw new Error("満員です");
 				}
-				router.replace(`matching/${matchingId}`);
+				router.replace(`/matching/${matchingId}`);
 			} catch (error) {
 				throw new Error(`参加に失敗${error}`);
 			}
@@ -42,9 +43,9 @@ export default function Matching(props: Props) {
 		eventSourceRef.current = new EventSource(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/list`, {
 			withCredentials: true,
 		});
-		eventSourceRef.current.onmessage = async ({ data }: MessageEvent) => {
+		eventSourceRef.current.onmessage = async ({ data }: MessageEvent<string>) => {
 			if (data !== JSON.stringify(matchings)) {
-				const rooms: MatchingInPlayersAndRule[] = JSON.parse(data);
+				const rooms: MatchingInUsersAndHostAndRule[] = JSON.parse(data);
 				setMatchings(rooms);
 			}
 		};
@@ -53,7 +54,7 @@ export default function Matching(props: Props) {
 				eventSourceRef.current.close();
 			}
 		};
-	}, [matchings]);
+	}, [matchings, eventSourceRef.current]);
 
 	if (matchings.length === 0) {
 		return (
@@ -112,7 +113,7 @@ export default function Matching(props: Props) {
 													size="sm"
 													disabled={!room.isRecruiting}
 													onPress={() => {
-														join(room.id, room.players.length, room.rule.playerCount);
+														join(room.id, room.players.length, room.game.rule.playerCount);
 													}}
 												>
 													参加する
@@ -121,12 +122,14 @@ export default function Matching(props: Props) {
 											<Table.Cell>
 												<Text>{room.name}</Text>
 											</Table.Cell>
-											<Table.Cell>
+											<Table.Cell 
+												css={{flexWrap: 'wrap'}}
+											>
 												{room.players.map((player, index) => (
 													<User
 														key={index}
-														src={player.image ?? ""}
-														name={player.name}
+														src={player.user.image ?? ""}
+														name={player.user.name ?? player.user.email}
 														size="sm"
 														// squared
 													/>
@@ -170,7 +173,7 @@ export async function getServerSideProps({ req }: GetServerSidePropsContext) {
 				Authorization: `Bearer ${req.cookies["next-auth.session-token"] ?? ""}`,
 			},
 		});
-		const matchings: MatchingInPlayersAndRule[] = await res.json();
+		const matchings: MatchingInUsersAndHostAndRule[] = await res.json();
 		return { props: { matchings } };
 	} catch (error) {
 		console.log(error);

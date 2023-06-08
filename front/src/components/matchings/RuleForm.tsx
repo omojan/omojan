@@ -1,6 +1,6 @@
 // import { MatchingOption } from "@/types/matchingType";
 import { MatchingOption } from "@/types/matchingType";
-import { Input, Radio, Spacer, Switch, FormElement } from "@nextui-org/react";
+import { Input, Radio, Spacer, Switch, FormElement, Text, Row } from "@nextui-org/react";
 import { ChangeEvent, Dispatch, SetStateAction } from "react";
 
 type Props = {
@@ -18,8 +18,11 @@ export default function RuleForm(props: Props) {
 	function handlePlayerCount(value: string) {
 		props.setMatchingOption((prev) => ({ ...prev, playerCount: Number(value) }));
 	}
-	function handleTurnCount(value: string) {
-		props.setMatchingOption((prev) => ({ ...prev, turnCount: Number(value) }));
+	function handleRoundCount(value: string) {
+		props.setMatchingOption((prev) => ({ ...prev, roundCount: Number(value) }));
+	}
+	function frontAndBackToggle() {
+		props.setMatchingOption((prev) => ({ ...prev, frontAndBack: !prev.frontAndBack }));
 	}
 	function lockToggle() {
 		props.setMatchingOption((prev) => ({ ...prev, isLock: !prev.isLock }));
@@ -103,8 +106,8 @@ export default function RuleForm(props: Props) {
 			<Radio.Group
 				label="ターン数"
 				orientation="horizontal"
-				value={String(props.matchingOption.turnCount)}
-				onChange={handleTurnCount}
+				value={String(props.matchingOption.roundCount)}
+				onChange={handleRoundCount}
 			>
 				<Radio size="xs" value="3">
 					3ターン
@@ -119,6 +122,15 @@ export default function RuleForm(props: Props) {
 					6ターン
 				</Radio>
 			</Radio.Group>
+			<Row>
+				<Text>前後両方に設置可能</Text>
+				<Spacer/>
+				<Switch
+					size="sm"
+					onChange={frontAndBackToggle}
+					checked={props.matchingOption.frontAndBack}
+				/>
+			</Row>
 			<Spacer />
 			<Input.Password
 				clearable

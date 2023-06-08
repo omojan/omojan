@@ -1,22 +1,22 @@
 import { useEffect, useState, useRef } from "react";
 import AuthGuard from "@/components/guards/AuthGuard";
-import { User as UserType } from "@prisma/client";
 import { GetServerSidePropsContext } from "next";
-import { decode } from "next-auth/jwt";
 import { useRouter } from "next/router";
-import { MatchingInPlayersAndGame, MatchingInPlayersAndRule } from "@/types/matchingType";
+import { MatchingInUsersAndHostAndRule } from "@/types/matchingType";
 import { Avatar, Badge, Button, Card, Container, Grid, Loading, Spacer, Text, Tooltip } from "@nextui-org/react";
 import Link from "next/link";
+import { PlayerInUser } from "@/types/playerType";
+import { MatchingInUsersAndGame } from "@/types/matchingType";
 
 type Props = {
-	meId: string | undefined;
-	matching: MatchingInPlayersAndRule;
+	mePlayer: PlayerInUser;
+	matching: MatchingInUsersAndHostAndRule;
 };
 
 export default function MatchingRoom(props: Props) {
 	const eventSourceRef = useRef<EventSource | null>(null);
 	const router = useRouter();
-	const [players, setPlayers] = useState<UserType[]>(props.matching.players);
+	const [players, setPlayers] = useState<PlayerInUser[]>(props.matching.players);
 
 	async function exit() {
 		if (players.length === 1) {
@@ -27,13 +27,17 @@ export default function MatchingRoom(props: Props) {
 			});
 		} else {
 			console.log("退出");
-			await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/exit`, {
-				method: "PATCH",
+			await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/exit`, {
+				method: "DELETE",
 				credentials: "include",
-				headers: {
-					"Content-Type": "application/json",
-				},
 			});
+			// await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/exit`, {
+			// 	method: "PATCH",
+			// 	credentials: "include",
+			// 	headers: {
+			// 		"Content-Type": "application/json",
+			// 	},
+			// });
 		}
 	}
 	// useEffect(() => {
@@ -57,17 +61,22 @@ export default function MatchingRoom(props: Props) {
 			}
 		);
 		eventSourceRef.current.onmessage = async ({ data }: MessageEvent) => {
-			const eventData: MatchingInPlayersAndGame = JSON.parse(data);
-			console.log(eventData.players)
-			console.log(players)
-			if (eventData.players !== players) {
-			// if (data !== JSON.stringify(players)) {
+			const eventData: MatchingInUsersAndGame = JSON.parse(data);
+			// console.log(JSON.stringify(eventData.players) !== JSON.stringify(players))
+			// console.log(eventData.players)
+			// console.log(players)
+
+			// console.log(players.length);
+			// console.log(props.matching.game.rule.playerCount);
+			if (JSON.stringify(eventData.players) !== JSON.stringify(players)) {
 				//データに差分があれば
 				setPlayers(eventData.players);
 			}
-			if (props.matching.hostUser.id === props.meId ) {
+			// console.log(props.matching.hostPlayer.id);
+			// console.log(props.mePlayer.id);
+			if (props.matching.hostPlayer.id === props.mePlayer.id) {
 				//ホストのクライアントのみ実行する処理
-				if( players.length === props.matching.rule.playerCount){
+				if (players.length === props.matching.game.rule.playerCount) {
 					//満員になったら
 					await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/close`, {
 						method: "PATCH",
@@ -75,7 +84,8 @@ export default function MatchingRoom(props: Props) {
 					});
 				}
 			}
-			if(eventData.game) {
+			if (!eventData.isRecruiting) {
+				//全員をゲームページへ移動
 				router.replace(`/game/${eventData.game.id}`);
 			}
 		};
@@ -108,16 +118,16 @@ export default function MatchingRoom(props: Props) {
 								<li key={index}>
 									<Grid.Container>
 										<Grid css={{ d: "flex" }}>
-											{player.id === props.meId ? (
+											{player.id === props.mePlayer.id ? (
 												<Badge size="xs" color="primary" content="あなた">
-													<Avatar size="lg" src={player.image ?? ""}></Avatar>
+													<Avatar size="lg" src={player.user.image ?? ""}></Avatar>
 												</Badge>
 											) : (
-												<Avatar size="lg" src={player.image ?? ""}></Avatar>
+												<Avatar size="lg" src={player.user.image ?? ""}></Avatar>
 											)}
 											<Spacer />
 											<Text size="$xl" css={{ d: "flex", alignItems: "center" }}>
-												{player.name}
+												{player.user.name}
 											</Text>
 										</Grid>
 									</Grid.Container>
@@ -126,7 +136,7 @@ export default function MatchingRoom(props: Props) {
 						</ul>
 						<Loading type="points" size="xl">
 							<Text>
-								{players.length - 1 === props.matching.rule.playerCount
+								{players.length - 1 === props.matching.game.rule.playerCount
 									? "ゲームに接続しています"
 									: "参加者を探しています"}
 							</Text>
@@ -157,18 +167,21 @@ export default function MatchingRoom(props: Props) {
 
 export async function getServerSideProps({ params, req }: GetServerSidePropsContext) {
 	try {
-		const decodeResult = await decode({
-			token: req.cookies["next-auth.session-token"],
-			secret: process.env.NEXTAUTH_SECRET ?? "",
-		});
-		const res = await fetch(`${process.env.BACKEND_URL}/matching/${params?.matchingId}`, {
+		const meRes = await fetch(`${process.env.BACKEND_URL}/player/me`, {
 			credentials: "include",
 			headers: {
 				Authorization: `Bearer ${req.cookies["next-auth.session-token"] ?? ""}`,
 			},
 		});
-		const matching: MatchingInPlayersAndRule = await res.json();
-		return { props: { meId: decodeResult?.sub, matching } };
+		const mePlayer: PlayerInUser = await meRes.json();
+		const matchingRes = await fetch(`${process.env.BACKEND_URL}/matching/${params?.matchingId}`, {
+			credentials: "include",
+			headers: {
+				Authorization: `Bearer ${req.cookies["next-auth.session-token"] ?? ""}`,
+			},
+		});
+		const matching: MatchingInUsersAndHostAndRule = await matchingRes.json();
+		return { props: { mePlayer, matching } };
 	} catch (error) {
 		console.log(error);
 		return { props: {} };

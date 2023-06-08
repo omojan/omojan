@@ -1,9 +1,10 @@
-import { Game, Matching, Rule, User } from '@prisma/client';
+import { Game, Matching, Rule } from '@prisma/client';
+import { PlayerInUser } from './playerType';
 
-export type GameInMtchingInRule = Game & {
-  matching: Matching & {
+export type GameInMatchingUsersAndHost = Game & {
     rule: Rule;
-    players: User[];
-    hostUser: User;
-  };
+    matching: Matching & {
+        players: PlayerInUser[];
+        hostPlayer: PlayerInUser;
+    }
 };

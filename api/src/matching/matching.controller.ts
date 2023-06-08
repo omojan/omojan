@@ -8,27 +8,20 @@ import {
   Delete,
   UseGuards,
   Req,
-  Res,
   Sse,
-  BadRequestException,
-  HttpException,
-  HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { MatchingService } from './matching.service';
 import { CreateMatchingDto } from './dto/create-matching.dto';
 import { RestGuard } from 'src/auth/guards/rest.guard';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Matching, User } from '@prisma/client';
-import { Observable, concatMap, interval, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   MatchingIdResponse,
-  MatchingInPlayers,
-  MatchingInPlayersAndRule,
-  MatchingInPlayersAndGame,
+  MatchingInUsersAndGame,
+  MatchingInUsersAndHostAndRule,
 } from './types/matching.type';
 import { MessageType } from './types/util.type';
-import { decode } from 'next-auth/jwt';
 
 @Controller('matching')
 @UseGuards(RestGuard)
@@ -39,22 +32,18 @@ export class MatchingController {
   ) {}
 
   @Sse('list')
-  observableFindAll(): Observable<MessageEvent<MatchingInPlayersAndRule[]>> {
+  observableFindAll(): Observable<
+    MessageEvent<MatchingInUsersAndHostAndRule[]>
+  > {
     return this.matchingService.observableFindAll();
   }
 
   @Sse(':id/participant')
   observableFindPlayersAndGame(
     @Req() @Param('id') id: string,
-  ): Observable<MessageEvent<MatchingInPlayersAndGame[]>> {
+  ): Observable<MessageEvent<MatchingInUsersAndGame>> {
     return this.matchingService.observableFindPlayersAndGame(id);
   }
-  // @Sse('participant')
-  // observableFindPlayers(@Req() req: Request): Observable<MessageEvent<User[]>> {
-  //   return this.matchingService.observableFindPlayers(
-  //     req.cookies['next-auth.session-token'],
-  //   );
-  // }
 
   @Post()
   create(
@@ -65,12 +54,12 @@ export class MatchingController {
   }
 
   @Get()
-  findAll(): Promise<MatchingInPlayersAndRule[]> {
+  findAll(): Promise<MatchingInUsersAndHostAndRule[]> {
     return this.matchingService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<MatchingInPlayersAndRule> {
+  findOne(@Param('id') id: string): Promise<MatchingInUsersAndHostAndRule> {
     return this.matchingService.findOne(id);
   }
 
@@ -78,19 +67,16 @@ export class MatchingController {
   join(@Param('id') id: string, @Req() req: Request): Promise<MessageType> {
     return this.matchingService.join(id, req.user.id);
   }
-  @Patch(':id/exit')
-  exit(@Param('id') id: string, @Req() req: Request): Promise<MessageType> {
-    return this.matchingService.exit(id, req.user.id);
-  }
   @Patch(':id/close')
   closeMatching(@Param('id') id: string): Promise<MessageType> {
     return this.matchingService.closeMatching(id);
   }
-  // @Patch(':id/success')
-  // success(@Param('id') id: string): Promise<MessageType> {}
-
   @Delete(':id')
   remove(@Param('id') id: string): Promise<MessageType> {
     return this.matchingService.remove(id);
+  }
+  @Delete('exit')
+  exit(@Req() req: Request): Promise<MessageType> {
+    return this.matchingService.exit(req.user.id);
   }
 }

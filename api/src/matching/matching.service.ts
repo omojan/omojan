@@ -2,16 +2,13 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMatchingDto } from './dto/create-matching.dto';
 import {
   MatchingIdResponse,
-  MatchingInPlayers,
-  MatchingInPlayersAndGame,
-  MatchingInPlayersAndRule,
+  MatchingInUsersAndGame,
+  MatchingInUsersAndHostAndRule,
 } from './types/matching.type';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Matching, User } from '@prisma/client';
 import { Observable, concatMap, interval, map } from 'rxjs';
 import { MessageType } from './types/util.type';
-import { decode } from 'next-auth/jwt';
 
 @Injectable()
 export class MatchingService {
@@ -20,15 +17,17 @@ export class MatchingService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  observableFindAll(): Observable<MessageEvent<MatchingInPlayersAndRule[]>> {
+  observableFindAll(): Observable<
+    MessageEvent<MatchingInUsersAndHostAndRule[]>
+  > {
     return interval(1000)
       .pipe(
         concatMap(() =>
           this.prismaService.matching.findMany({
             include: {
-              players: true,
-              hostUser: true,
-              rule: true,
+              players: { include: { user: true } },
+              hostPlayer: true,
+              game: { include: { rule: true } },
             },
           }),
         ),
@@ -37,7 +36,7 @@ export class MatchingService {
   }
   observableFindPlayersAndGame(
     id: string,
-  ): Observable<MessageEvent<MatchingInPlayersAndGame[]>> {
+  ): Observable<MessageEvent<MatchingInUsersAndGame>> {
     return interval(1000)
       .pipe(
         concatMap(
@@ -47,7 +46,7 @@ export class MatchingService {
                 id: id,
               },
               include: {
-                players: true,
+                players: { include: { user: true } },
                 game: true,
               },
             }),
@@ -67,7 +66,7 @@ export class MatchingService {
         map(
           (matching) =>
             ({
-              data: { players: matching.players, game: matching.game },
+              data: matching,
             } as MessageEvent),
         ),
       );
@@ -77,25 +76,34 @@ export class MatchingService {
     userId: string,
     dto: CreateMatchingDto,
   ): Promise<MatchingIdResponse> {
+    const player = await this.prismaService.player.findUnique({
+      where: { userId },
+    });
+    if (player) {
+      await this.prismaService.player.delete({ where: { id: player.id } });
+    }
     const matching = await this.prismaService.matching.create({
       data: {
         name: dto.name,
         password: dto.password,
-        hostUser: {
-          connect: {
-            id: userId,
-          },
-        },
-        rule: {
+        hostPlayer: {
           create: {
-            timeLimit: dto.timeLimit,
-            playerCount: dto.playerCount,
-            turnCount: dto.turnCount,
+            userId,
           },
         },
         players: {
-          connect: {
-            id: userId,
+          connect: [{ userId }],
+        },
+        game: {
+          create: {
+            rule: {
+              create: {
+                timeLimit: dto.timeLimit,
+                playerCount: dto.playerCount,
+                roundCount: dto.roundCount,
+                frontAndBack: dto.frontAndBack,
+              },
+            },
           },
         },
       },
@@ -103,36 +111,46 @@ export class MatchingService {
     return { matchingId: matching.id };
   }
 
-  findAll(): Promise<MatchingInPlayersAndRule[]> {
+  findAll(): Promise<MatchingInUsersAndHostAndRule[]> {
     return this.prismaService.matching.findMany({
-      include: { players: true, hostUser: true, rule: true },
+      include: {
+        players: { include: { user: true } },
+        hostPlayer: true,
+        game: { include: { rule: true } },
+      },
     });
   }
 
-  findOne(id: string): Promise<MatchingInPlayersAndRule> {
+  findOne(id: string): Promise<MatchingInUsersAndHostAndRule> {
     return this.prismaService.matching.findUnique({
       where: {
-        id: id,
+        id,
       },
       include: {
-        players: true,
-        hostUser: true,
-        rule: true,
+        players: { include: { user: true } },
+        hostPlayer: true,
+        game: { include: { rule: true } },
       },
     });
   }
 
   async join(id: string, userId: string): Promise<MessageType> {
+    const player = await this.prismaService.player.findUnique({
+      where: { userId },
+    });
+    if (player) {
+      await this.prismaService.player.delete({ where: { id: player.id } });
+    }
     const matching = await this.prismaService.matching.findUnique({
       where: {
         id,
       },
       include: {
         players: true,
-        rule: true,
+        game: { include: { rule: true } },
       },
     });
-    if (matching.players.length >= matching.rule.playerCount) {
+    if (matching.players.length >= matching.game.rule.playerCount) {
       throw new BadRequestException('The matching is already full.');
     }
 
@@ -142,27 +160,7 @@ export class MatchingService {
       },
       data: {
         players: {
-          connect: [
-            {
-              id: userId,
-            },
-          ],
-        },
-      },
-    });
-    return { message: 'ok' };
-  }
-
-  async exit(id: string, userId: string): Promise<MessageType> {
-    await this.prismaService.matching.update({
-      where: {
-        id,
-      },
-      data: {
-        players: {
-          disconnect: {
-            id: userId,
-          },
+          create: [{ userId }],
         },
       },
     });
@@ -174,32 +172,46 @@ export class MatchingService {
       where: {
         id,
       },
+
       data: {
         isRecruiting: false,
-        game: { create: {} },
-      },
-      include: {
-        rule: true,
       },
     });
     return { message: 'ok' };
   }
-  // async success (id: string): Promise<MessageType> {
-  //   await this.prismaService.matching.update({
-  //     where: {
-  //       id
-  //     },
-  //     data: {
 
-  //     }
-  //   })
-  // }
   async remove(id: string): Promise<MessageType> {
-    await this.prismaService.matching.delete({
+    const matching = await this.prismaService.matching.findUnique({
+      where: { id },
+    });
+    await console.log(matching.gameId);
+    await this.prismaService.game.delete({
       where: {
-        id,
+        id: matching.gameId,
       },
     });
+
+    return { message: 'ok' };
+  }
+  async exit(userId: string): Promise<MessageType> {
+  //   const player = await this.prismaService.player.findUnique({
+  //     where: { userId },
+  //     include: { hostMatching: true },
+  //   });
+  //   if (player.hostMatching) {
+  //     await this.prismaService.game.delete({
+  //       where: { id: player.hostMatching.gameId },
+  //     });
+  //   } else {
+  //     await this.prismaService.player.delete({ where: { id: player.id } });
+  //   }
+
+  //   return { message: 'ok' };
+  // }
+    const player = await this.prismaService.player.findUnique({
+      where: { userId },
+    });
+    await this.prismaService.player.delete({ where: { id: player.id } });
     return { message: 'ok' };
   }
 }

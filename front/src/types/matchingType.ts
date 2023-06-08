@@ -1,5 +1,5 @@
-import { Game, Matching, Rule, User } from "@prisma/client";
-
+import { Game, Matching, Player, Rule, User } from "@prisma/client";
+import { PlayerInUser } from "./playerType";
 export type MatchingIdResponse = {
 	matchingId: string;
 };
@@ -8,7 +8,8 @@ export type MatchingOption = {
 	name: string;
 	timeLimit: number;
 	playerCount: number;
-	turnCount: number;
+	roundCount: number;
+	frontAndBack: boolean;
 	isLock: boolean;
 	password: string;
 	errors: {
@@ -16,8 +17,16 @@ export type MatchingOption = {
 		password: boolean;
 	};
 };
-// export type MatchingInPlayers = Matching & { players: User[]; hostUser: User };
-export type MatchingInPlayersAndRule = Matching & { players: User[]; hostUser: User; rule: Rule };
-export type MatchingInPlayersAndGame = Matching & { players: User[]; game: Game };
 
-// export type MatchingInPlayersAndRuleAndGame = Matching & { players: User[]; hostUser: User; rule: Rule; game: Game };
+export type MatchingInUsersAndGame = Matching & {
+	players: PlayerInUser[];
+	game: Game;
+};
+
+export type MatchingInUsersAndHostAndRule = Matching & {
+	players: PlayerInUser[];
+	hostPlayer: Player;
+	game: Game & {
+		rule: Rule;
+	};
+};
