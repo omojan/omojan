@@ -1,15 +1,19 @@
-import { Game, Matching, Rule, User } from '@prisma/client';
+import { Game, Matching, Player, Rule } from '@prisma/client';
+import { PlayerInUser } from './playerType';
 
 export type MatchingIdResponse = {
   matchingId: string;
 };
-export type IdType = string;
-export type MatchingInPlayers = Matching & { players: User[]; hostUser: User };
-export type MatchingInPlayersAndRule = Matching & {
-  players: User[];
-  hostUser: User;
-  rule: Rule;
-};
-export type MatchingInPlayersAndGame = Matching & { players: User[]; game: Game };
 
-// export type MatchingInPlayersAndRuleAndGame = Matching & { players: User[]; hostUser: User; rule: Rule; game: Game };
+export type MatchingInUsersAndGame = Matching & {
+  players: PlayerInUser[];
+  game: Game;
+};
+
+export type MatchingInUsersAndHostAndRule = Matching & {
+  players: PlayerInUser[];
+  hostPlayer: Player;
+  game: Game & {
+    rule: Rule;
+  };
+};

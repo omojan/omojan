@@ -10,7 +10,7 @@ type Props = {
 export default function Game(props: Props) {
     console.log(props.game)
 	return (
-        <>game</>
+        <>scene:{props.game.scene}</>
     );
 }
 

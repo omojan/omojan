@@ -1,10 +1,8 @@
 import AuthGuard from "@/components/guards/AuthGuard";
 import CreateMatchingModal from "@/components/matchings/CreateMatchingModal";
 import RuleForm from "@/components/matchings/RuleForm";
-import Header from "@/components/util/Header";
 import { MatchingOption } from "@/types/matchingType";
-import { Button, Card, Container, Dropdown, Input, Spacer } from "@nextui-org/react";
-import { signOut } from "next-auth/react";
+import { Button, Card, Container, Spacer } from "@nextui-org/react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -13,7 +11,8 @@ export default function Home() {
 		name: "誰でも歓迎",
 		timeLimit: 30,
 		playerCount: 4,
-		turnCount: 4,
+		roundCount: 4,
+		frontAndBack: false,
 		isLock: false,
 		password: "",
 		errors: { name: false, password: false },

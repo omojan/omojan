@@ -1,7 +1,7 @@
 import { MatchingOption } from "@/types/matchingType";
 import { Button, Modal, Text, useModal } from "@nextui-org/react";
 import { useRouter } from "next/router";
-import { Dispatch, ReactNode, SetStateAction, useState } from "react";
+import { Dispatch, ReactNode, SetStateAction } from "react";
 
 type Props = {
 	children: ReactNode;
@@ -43,7 +43,8 @@ export default function CreateMatchingModal(props: Props) {
 					name: props.matchingOption.name,
 					timeLimit: props.matchingOption.timeLimit,
 					playerCount: props.matchingOption.playerCount,
-					turnCount: props.matchingOption.turnCount,
+					roundCount: props.matchingOption.roundCount,
+					frontAndBack: props.matchingOption.frontAndBack,
 					password: props.matchingOption.password,
 				}),
 			});

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsInt, IsString, Max, Min } from 'class-validator';
+import { IsNotEmpty, IsInt, IsString, Max, Min, IsBoolean } from 'class-validator';
 
 export class CreateMatchingDto {
   @IsNotEmpty()
@@ -21,8 +21,11 @@ export class CreateMatchingDto {
   @IsInt()
   @Min(3)
   @Max(6)
-  turnCount: number;
+  roundCount: number;
 
   @IsString()
   password: string;
+
+  @IsBoolean()
+  frontAndBack: boolean;
 }
