@@ -17,3 +17,5 @@ export type MatchingInUsersAndHostAndRule = Matching & {
     rule: Rule;
   };
 };
+
+// export type

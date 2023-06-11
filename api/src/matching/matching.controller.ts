@@ -41,7 +41,9 @@ export class MatchingController {
   @Sse(':id/participant')
   observableFindPlayersAndGame(
     @Req() @Param('id') id: string,
-  ): Observable<MessageEvent<MatchingInUsersAndGame>> {
+  ): Observable<
+    MessageEvent<MatchingInUsersAndGame | { [key: string]: never }>
+  > {
     return this.matchingService.observableFindPlayersAndGame(id);
   }
 
@@ -71,9 +73,9 @@ export class MatchingController {
   closeMatching(@Param('id') id: string): Promise<MessageType> {
     return this.matchingService.closeMatching(id);
   }
-  @Delete(':id')
-  remove(@Param('id') id: string): Promise<MessageType> {
-    return this.matchingService.remove(id);
+  @Delete(':id/delete')
+  delete(@Param('id') id: string): Promise<MessageType> {
+    return this.matchingService.delete(id);
   }
   @Delete('exit')
   exit(@Req() req: Request): Promise<MessageType> {
