@@ -1,6 +1,17 @@
 import AuthGuard from "@/components/guards/AuthGuard";
 import { MatchingInUsersAndHostAndRule } from "@/types/matchingType";
-import { Badge, Button, Card, Container, Modal, Spacer, Table, Text, User, useModal } from "@nextui-org/react";
+import {
+	Badge,
+	Button,
+	Card,
+	Container,
+	Modal,
+	Spacer,
+	Table,
+	Text,
+	User,
+	useModal,
+} from "@nextui-org/react";
 import { Matching } from "@prisma/client";
 import { GetServerSidePropsContext } from "next";
 import Link from "next/link";
@@ -11,7 +22,6 @@ type Props = {
 	matchings: MatchingInUsersAndHostAndRule[];
 };
 export default function Matching(props: Props) {
-
 	const eventSourceRef = useRef<EventSource | null>(null);
 	const router = useRouter();
 	const [matchings, setMatchings] = useState(props.matchings);
@@ -22,13 +32,16 @@ export default function Matching(props: Props) {
 			setVisible(true);
 		} else {
 			try {
-				const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${matchingId}/join`, {
-					method: "PATCH",
-					credentials: "include",
-					headers: {
-						"Content-Type": "application/json",
-					},
-				});
+				const res = await fetch(
+					`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${matchingId}/join`,
+					{
+						method: "PATCH",
+						credentials: "include",
+						headers: {
+							"Content-Type": "application/json",
+						},
+					}
+				);
 				if (res.status === 400) {
 					throw new Error("満員です");
 				}
@@ -40,9 +53,12 @@ export default function Matching(props: Props) {
 	}
 
 	useEffect(() => {
-		eventSourceRef.current = new EventSource(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/list`, {
-			withCredentials: true,
-		});
+		eventSourceRef.current = new EventSource(
+			`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/list`,
+			{
+				withCredentials: true,
+			}
+		);
 		eventSourceRef.current.onmessage = async ({ data }: MessageEvent<string>) => {
 			if (data !== JSON.stringify(matchings)) {
 				const rooms: MatchingInUsersAndHostAndRule[] = JSON.parse(data);
@@ -60,21 +76,17 @@ export default function Matching(props: Props) {
 		return (
 			<>
 				{/* <AuthGuard> */}
-				<Container md>
+				<Container xs>
+					<Link href="/">
+						<Button auto rounded ghost>
+							ホームへ戻る
+						</Button>
+					</Link>
+					<Spacer />
 					<Card>
-						<Card.Header>
-							<Text size="$2xl" weight="bold" css={{ d: "flex", w: "100%", justifyContent: "center" }}>
-								募集している部屋がありません
-							</Text>
-						</Card.Header>
-						<Card.Footer>
-							<Spacer y={4} />
-							<Link href="/">
-								<Button ghost rounded>
-									ホームへ戻る
-								</Button>
-							</Link>
-						</Card.Footer>
+						<Card.Body>
+							<Text css={{ textAlign: "center" }}>募集している部屋がありません</Text>
+						</Card.Body>
 					</Card>
 				</Container>
 				{/* </AuthGuard> */}
@@ -85,9 +97,19 @@ export default function Matching(props: Props) {
 			<>
 				{/* <AuthGuard> */}
 				<Container sm>
+					<Link href="/">
+						<Button auto ghost rounded>
+							ホームへ戻る
+						</Button>
+					</Link>
+					<Spacer />
 					<Card>
 						<Card.Header>
-							<Text size="$2xl" weight="bold" css={{ d: "flex", w: "100%", justifyContent: "center" }}>
+							<Text
+								size="$xl"
+								weight="bold"
+								css={{ d: "flex", w: "100%", justifyContent: "center" }}
+							>
 								部屋一覧
 							</Text>
 						</Card.Header>
@@ -102,10 +124,7 @@ export default function Matching(props: Props) {
 									{matchings.map((room, index) => (
 										<Table.Row key={index}>
 											<Table.Cell css={{ d: "flex", alignItems: "center" }}>
-												<Badge
-													variant="dot"
-													color={room.isRecruiting ? "success" : "warning"}
-												/>
+												<Badge variant="dot" color={room.isRecruiting ? "success" : "warning"} />
 												<Spacer />
 												<Button
 													auto
@@ -122,9 +141,7 @@ export default function Matching(props: Props) {
 											<Table.Cell>
 												<Text>{room.name}</Text>
 											</Table.Cell>
-											<Table.Cell 
-												css={{flexWrap: 'wrap'}}
-											>
+											<Table.Cell css={{ flexWrap: "wrap" }}>
 												{room.players.map((player, index) => (
 													<User
 														key={index}
@@ -140,14 +157,6 @@ export default function Matching(props: Props) {
 								</Table.Body>
 							</Table>
 						</Card.Body>
-						<Card.Footer>
-							<Spacer y={4} />
-							<Link href="/">
-								<Button ghost rounded>
-									ホームへ戻る
-								</Button>
-							</Link>
-						</Card.Footer>
 					</Card>
 				</Container>
 				<Modal closeButton {...bindings}>

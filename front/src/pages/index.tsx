@@ -21,24 +21,24 @@ export default function Home() {
 		<>
 			<main>
 				{/* <AuthGuard> */}
-					<Container xs>
-						<Card>
-							<Card.Body css={{ p: "40px 24px 32px" }}>
-								<CreateMatchingModal
-									matchingOption={matchingOption}
-									setMatchingOption={setMatchingOption}
-								>
-									<RuleForm matchingOption={matchingOption} setMatchingOption={setMatchingOption} />
-								</CreateMatchingModal>
-								<Spacer />
-								<Link href="/matching" className="w-full">
-									<Button rounded size="lg" css={{ w: "100%" }}>
-										部屋一覧
-									</Button>
-								</Link>
-							</Card.Body>
-						</Card>
-					</Container>
+				<Container xs>
+					<Card>
+						<Card.Body css={{ p: "40px 24px 32px" }}>
+							<CreateMatchingModal
+								matchingOption={matchingOption}
+								setMatchingOption={setMatchingOption}
+							>
+								<RuleForm matchingOption={matchingOption} setMatchingOption={setMatchingOption} />
+							</CreateMatchingModal>
+							<Spacer />
+							<Link href="/matching" className="w-full">
+								<Button rounded size="lg" css={{ w: "100%" }}>
+									部屋一覧
+								</Button>
+							</Link>
+						</Card.Body>
+					</Card>
+				</Container>
 				{/* </AuthGuard> */}
 			</main>
 		</>
