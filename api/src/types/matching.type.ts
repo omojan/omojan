@@ -17,5 +17,9 @@ export type MatchingInUsersAndHostAndRule = Matching & {
     rule: Rule;
   };
 };
+// export type MatchingInUsersAndHost = Matching & {
+//   players: PlayerInUser[];
+//   hostPlayer: Player;
+// };
 
 // export type

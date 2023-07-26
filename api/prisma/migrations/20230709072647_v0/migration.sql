@@ -59,11 +59,11 @@ CREATE TABLE "VerificationToken" (
 CREATE TABLE "Player" (
     "id" TEXT NOT NULL,
     "words" TEXT[],
+    "winCount" INTEGER NOT NULL DEFAULT 0,
     "userId" TEXT NOT NULL,
     "hostMatchingId" TEXT,
     "joinMatchingId" TEXT,
-    "roundId" TEXT,
-    "turnId" TEXT,
+    "gameId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -100,6 +100,7 @@ CREATE TABLE "Rule" (
 -- CreateTable
 CREATE TABLE "Game" (
     "id" TEXT NOT NULL,
+    "parentWords" TEXT[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "scene" "Scene" NOT NULL DEFAULT 'RECRUITING',
@@ -110,7 +111,6 @@ CREATE TABLE "Game" (
 -- CreateTable
 CREATE TABLE "Round" (
     "id" TEXT NOT NULL,
-    "parentWord" TEXT NOT NULL,
     "gameId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -122,6 +122,7 @@ CREATE TABLE "Round" (
 CREATE TABLE "Turn" (
     "id" TEXT NOT NULL,
     "roundId" TEXT NOT NULL,
+    "playerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -146,7 +147,7 @@ CREATE TABLE "Text" (
 CREATE TABLE "Word" (
     "id" TEXT NOT NULL,
     "text" TEXT NOT NULL,
-    "demand" INTEGER NOT NULL,
+    "demand" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -155,6 +156,12 @@ CREATE TABLE "Word" (
 
 -- CreateTable
 CREATE TABLE "_votePlayers" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_PlayerToRound" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL
 );
@@ -181,9 +188,6 @@ CREATE UNIQUE INDEX "Player_userId_key" ON "Player"("userId");
 CREATE UNIQUE INDEX "Player_hostMatchingId_key" ON "Player"("hostMatchingId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Player_turnId_key" ON "Player"("turnId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Matching_gameId_key" ON "Matching"("gameId");
 
 -- CreateIndex
@@ -197,6 +201,12 @@ CREATE UNIQUE INDEX "_votePlayers_AB_unique" ON "_votePlayers"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_votePlayers_B_index" ON "_votePlayers"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_PlayerToRound_AB_unique" ON "_PlayerToRound"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_PlayerToRound_B_index" ON "_PlayerToRound"("B");
 
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -214,10 +224,7 @@ ALTER TABLE "Player" ADD CONSTRAINT "Player_hostMatchingId_fkey" FOREIGN KEY ("h
 ALTER TABLE "Player" ADD CONSTRAINT "Player_joinMatchingId_fkey" FOREIGN KEY ("joinMatchingId") REFERENCES "Matching"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Player" ADD CONSTRAINT "Player_turnId_fkey" FOREIGN KEY ("turnId") REFERENCES "Turn"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Player" ADD CONSTRAINT "Player_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Player" ADD CONSTRAINT "Player_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Matching" ADD CONSTRAINT "Matching_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -226,10 +233,13 @@ ALTER TABLE "Matching" ADD CONSTRAINT "Matching_gameId_fkey" FOREIGN KEY ("gameI
 ALTER TABLE "Rule" ADD CONSTRAINT "Rule_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Round" ADD CONSTRAINT "Round_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Round" ADD CONSTRAINT "Round_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "Game"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Turn" ADD CONSTRAINT "Turn_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Turn" ADD CONSTRAINT "Turn_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "Player"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Turn" ADD CONSTRAINT "Turn_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Text" ADD CONSTRAINT "Text_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "Player"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -242,3 +252,9 @@ ALTER TABLE "_votePlayers" ADD CONSTRAINT "_votePlayers_A_fkey" FOREIGN KEY ("A"
 
 -- AddForeignKey
 ALTER TABLE "_votePlayers" ADD CONSTRAINT "_votePlayers_B_fkey" FOREIGN KEY ("B") REFERENCES "Text"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_PlayerToRound" ADD CONSTRAINT "_PlayerToRound_A_fkey" FOREIGN KEY ("A") REFERENCES "Player"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_PlayerToRound" ADD CONSTRAINT "_PlayerToRound_B_fkey" FOREIGN KEY ("B") REFERENCES "Round"("id") ON DELETE CASCADE ON UPDATE CASCADE;

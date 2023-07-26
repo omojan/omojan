@@ -1,4 +1,5 @@
 import AuthGuard from "@/components/guards/AuthGuard";
+import Header from "@/components/util/Header";
 import { MatchingInUsersAndHostAndRule } from "@/types/matchingType";
 import {
 	Badge,
@@ -75,6 +76,8 @@ export default function Matching(props: Props) {
 	if (matchings.length === 0) {
 		return (
 			<>
+				<Header />
+
 				{/* <AuthGuard> */}
 				<Container xs>
 					<Link href="/">
@@ -95,6 +98,7 @@ export default function Matching(props: Props) {
 	} else {
 		return (
 			<>
+				<Header />
 				{/* <AuthGuard> */}
 				<Container sm>
 					<Link href="/">
@@ -105,11 +109,7 @@ export default function Matching(props: Props) {
 					<Spacer />
 					<Card>
 						<Card.Header>
-							<Text
-								size="$xl"
-								weight="bold"
-								css={{ d: "flex", w: "100%", justifyContent: "center" }}
-							>
+							<Text size="$xl" b css={{ d: "flex", w: "100%", justifyContent: "center" }}>
 								部屋一覧
 							</Text>
 						</Card.Header>

@@ -7,14 +7,14 @@ import {
   Param,
   Delete,
   Req,
-  UseGuards
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { PlayerService } from './player.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { RestGuard } from 'src/auth/guards/rest.guard';
-import { PlayerInUser } from 'src/matching/types/playerType';
+import { PlayerInUser } from 'src/types/playerType';
 
 @Controller('player')
 @UseGuards(RestGuard)

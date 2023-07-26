@@ -20,8 +20,8 @@ import {
   MatchingIdResponse,
   MatchingInUsersAndGame,
   MatchingInUsersAndHostAndRule,
-} from './types/matching.type';
-import { MessageType } from './types/util.type';
+} from '../types/matching.type';
+import { MessageType } from '../types/util.type';
 
 @Controller('matching')
 @UseGuards(RestGuard)

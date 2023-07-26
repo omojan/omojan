@@ -1,6 +1,7 @@
 import AuthGuard from "@/components/guards/AuthGuard";
-import CreateMatchingModal from "@/components/matchings/CreateMatchingModal";
-import RuleForm from "@/components/matchings/RuleForm";
+import CreateMatchingModal from "@/components/matching/CreateMatchingModal";
+import RuleForm from "@/components/matching/RuleForm";
+import Header from "@/components/util/Header";
 import { MatchingOption } from "@/types/matchingType";
 import { Button, Card, Container, Spacer } from "@nextui-org/react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ export default function Home() {
 	});
 	return (
 		<>
+		<Header/>
 			<main>
 				{/* <AuthGuard> */}
 				<Container xs>

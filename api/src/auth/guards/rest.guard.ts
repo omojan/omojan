@@ -13,8 +13,9 @@ export class RestGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();
     const token =
-      req.cookies['next-auth.session-token'] ?? req.headers.authorization.split(' ')[1];
-      if (!token) {
+      req.cookies['next-auth.session-token'] ??
+      req.headers.authorization.split(' ')[1];
+    if (!token) {
       return false;
     }
 
@@ -28,22 +29,23 @@ export class RestGuard implements CanActivate {
     try {
       const decodeResult = await decode({ token, secret });
 
-        if (!decodeResult) {
-          return false;
-        }
+      if (!decodeResult) {
+        return false;
+      }
 
-        const user = await this.prismaService.user.findUnique({
-          where: {
-            id: decodeResult.sub,
-          },
-        });
-        // console.log('user',user);
-        if (!user) {
-          return false;
-        }
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: decodeResult.sub,
+        },
+        include: { player: true },
+      });
+      // console.log('user',user);
+      if (!user) {
+        return false;
+      }
 
-        req.user = user;
-        return true;
+      req.user = user;
+      return true;
     } catch (error) {
       console.error('error', error);
       return false;

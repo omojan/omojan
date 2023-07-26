@@ -61,22 +61,23 @@ model VerificationToken {
 }
 
 model Player{
-  id              String    @id @default(cuid())
+  id              String      @id @default(cuid())
   words           String[]
-  userId          String    @unique
-  hostMatchingId  String?   @unique
+  winCount        Int         @default(0)
+  userId          String      @unique
+  hostMatchingId  String?     @unique
   joinMatchingId  String? 
-  roundId         String?
-  turnId          String?   @unique
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt
+  gameId          String?     
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now()) @updatedAt
+  createTexts     Text[]      @relation("authorPlayer")
+  voteTexts       Text[]      @relation("votePlayers")
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hostMatching    Matching?    @relation("hostPlayer", fields: [hostMatchingId], references: [id])
-  joinMatching    Matching?   @relation("players", fields: [joinMatchingId], references: [id],onDelete: Cascade)
-  turn            Turn?       @relation(fields: [turnId], references: [id])
-  round           Round?       @relation(fields: [roundId], references: [id])
-  createTexts           Text[]    @relation("authorPlayer")
-  voteTexts            Text[]   @relation("votePlayers")
+  hostMatching    Matching?   @relation("hostPlayer", fields: [hostMatchingId], references: [id])
+  joinMatching    Matching?   @relation("players", fields: [joinMatchingId], references: [id], onDelete: Cascade)
+  turn            Turn[]
+  round           Round[]
+  game            Game?       @relation(fields: [gameId], references: [id])
 }
 
 enum Scene {
@@ -112,54 +113,54 @@ model Rule {
 }
 model Game {
   id            String     @id @default(cuid())
+  parentWords    String[]
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @default(now()) @updatedAt
   matching      Matching?
   rule          Rule?
   rounds        Round[]
   scene         Scene      @default(RECRUITING)
+  players       Player[]
 }
 model Round {
-  id            String   @id @default(cuid())
-  parentWord    String
+  id            String    @id @default(cuid())
   gameId        String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @default(now()) @updatedAt
   orderPlayers  Player[]
   turns         Turn[]
-  game          Game      @relation(fields: [gameId], references: [id])
+  game          Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model Turn{
   id          String     @id @default(cuid())
   roundId     String
+  playerId    String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @default(now()) @updatedAt
-  player      Player?
+  player      Player?     @relation(fields: [playerId], references: [id])
   text        Text?
-  round       Round       @relation(fields: [roundId], references: [id])
+  round       Round       @relation(fields: [roundId], references: [id], onDelete: Cascade)
 }
 
 model Text {
-  id          String   @id @default(cuid())
-  parentWord  String
-  frontWord   String?
-  backWord    String?
-  turnId      String    @unique
+  id            String   @id @default(cuid())
+  parentWord    String
+  frontWord     String?
+  backWord      String?
+  turnId        String    @unique
   authorId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now()) @updatedAt
-  authorPlayer  Player  @relation("authorPlayer", fields: [authorId], references: [id])
-  votePlayers Player[]   @relation("votePlayers")
-  turn        Turn       @relation(fields: [turnId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  votePlayers   Player[]   @relation("votePlayers")
+  authorPlayer  Player    @relation("authorPlayer", fields: [authorId], references: [id])
+  turn          Turn       @relation(fields: [turnId], references: [id], onDelete: Cascade)
 }
 
 model Word {
   id          String   @id @default(cuid())
   text        String
-  demand      Int
+  demand      Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
 }
-
-

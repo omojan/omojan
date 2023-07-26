@@ -1,5 +1,5 @@
 import { MatchingOption } from "@/types/matchingType";
-import { Button, Modal, Text, useModal } from "@nextui-org/react";
+import { Button, Container, Modal, Text, useModal } from "@nextui-org/react";
 import { useRouter } from "next/router";
 import { Dispatch, ReactNode, SetStateAction } from "react";
 
@@ -22,12 +22,18 @@ export default function CreateMatchingModal(props: Props) {
 	// }
 
 	async function createMatching() {
-		if (!props.matchingOption.name || (props.matchingOption.isLock && !props.matchingOption.password)) {
+		if (
+			!props.matchingOption.name ||
+			(props.matchingOption.isLock && !props.matchingOption.password)
+		) {
 			if (!props.matchingOption.name) {
 				props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, name: true } }));
 			}
 			if (props.matchingOption.isLock && !props.matchingOption.password) {
-				props.setMatchingOption((prev) => ({ ...prev, errors: { ...prev.errors, password: true } }));
+				props.setMatchingOption((prev) => ({
+					...prev,
+					errors: { ...prev.errors, password: true },
+				}));
 			}
 			return;
 		}
@@ -61,20 +67,22 @@ export default function CreateMatchingModal(props: Props) {
 				部屋を作成する
 			</Button>
 			<Modal closeButton {...bindings}>
-				{/* <Modal closeButton  open={isOpen} onClose={close}> */}
-				<form onSubmit={createMatching}>
-					<Modal.Header>
-						<Text h2 size="$xl">
-							ルール設定
-						</Text>
-					</Modal.Header>
-					<Modal.Body>{props.children}</Modal.Body>
-					<Modal.Footer>
-						<Button auto shadow rounded onPress={createMatching}>
-							募集を開始する
-						</Button>
-					</Modal.Footer>
-				</form>
+				<Container xs>
+					{/* <Modal closeButton  open={isOpen} onClose={close}> */}
+					<form onSubmit={createMatching}>
+						<Modal.Header>
+							<Text h2 size="$xl">
+								ルール設定
+							</Text>
+						</Modal.Header>
+						<Modal.Body>{props.children}</Modal.Body>
+						<Modal.Footer>
+							<Button auto shadow rounded onPress={createMatching}>
+								募集を開始する
+							</Button>
+						</Modal.Footer>
+					</form>
+				</Container>
 			</Modal>
 		</>
 	);

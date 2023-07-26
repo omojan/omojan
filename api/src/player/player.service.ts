@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PlayerInUser } from 'src/matching/types/playerType';
+import { PlayerInUser } from 'src/types/playerType';
 
 @Injectable()
 export class PlayerService {
@@ -23,7 +23,7 @@ export class PlayerService {
       where: { userId: id },
       include: { user: true },
     });
-    return mePlayer
+    return mePlayer;
   }
 
   findOne(id: number) {

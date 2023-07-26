@@ -19,6 +19,8 @@ import {
 import Link from "next/link";
 import { PlayerInUser } from "@/types/playerType";
 import { MatchingInUsersAndGame } from "@/types/matchingType";
+import Header from "@/components/util/Header";
+import { useHostGuard } from "@/hooks/useHostGuard";
 
 type Props = {
 	mePlayer: PlayerInUser;
@@ -28,117 +30,115 @@ type Props = {
 export default function MatchingRoom(props: Props) {
 	const eventSourceRef = useRef<EventSource | null>(null);
 	const router = useRouter();
-	const [players, setPlayers] = useState<PlayerInUser[]>(props.matching?.players ?? []);
-	const [isExist, setIsExist] = useState(Boolean(!Object.keys(props.matching ?? {}).length));
+	const [players, setPlayers] = useState<PlayerInUser[]>(props.matching?.players);
+	// const [players, setPlayers] = useState<PlayerInUser[]>(props.matching?.players ?? []);
+	const [isExist, setIsExist] = useState(Boolean(!Object.keys(props.matching).length));
+	// const [isExist, setIsExist] = useState(Boolean(!Object.keys(props.matching ?? {}).length));
+	const { hostGuard } = useHostGuard();
 
 	async function exit() {
-		if (players.length === 1) {
-			console.log("消去");
-			await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/delete`, {
-				method: "DELETE",
-				credentials: "include",
-			});
-		} else {
-			console.log("退出");
-			await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/exit`, {
-				method: "DELETE",
-				credentials: "include",
-			});
-			// await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/exit`, {
-			// 	method: "PATCH",
-			// 	credentials: "include",
-			// 	headers: {
-			// 		"Content-Type": "application/json",
-			// 	},
-			// });
-		}
+		await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/exit`, {
+			method: "DELETE",
+			credentials: "include",
+		});
 	}
-	// useEffect(() => {
-	// 	function routeChange(url: string, { shallow }: { shallow: boolean }) {
-	// 		console.log(url, shallow);
-	// 	}
-
-	// 	router.events.on("routeChangeStart", routeChange);
-	// 	// router.events.on("routeChangeComplete", routeChange);
-	// 	return () => {
-	// 		router.events.off("routeChangeStart", routeChange);
-	// 		// router.events.off("routeChangeComplete", routeChange);
-	// 	};
-	// }, [router]);
-
 	useEffect(() => {
-		if (Boolean(Object.keys(props.matching ?? {}).length)) {
-			eventSourceRef.current = new EventSource(
-				`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/participant`,
-				{
-					withCredentials: true,
-				}
-			);
-			eventSourceRef.current.onmessage = async ({ data }: MessageEvent) => {
-				const eventData: MatchingInUsersAndGame = JSON.parse(data);
-
-				if (!Object.keys(eventData).length) {
-					setIsExist(true);
-					return;
-				}
-				if (JSON.stringify(eventData.players) !== JSON.stringify(players)) {
-					//データに差分があれば
-					setPlayers(eventData.players);
-				}
-				if (props.matching.hostPlayer.id === props.mePlayer.id) {
-					//ホストのクライアントのみ実行する処理
-					if (players.length === props.matching.game.rule.playerCount) {
-						//満員になったら
-						await fetch(
-							`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/close`,
-							{
-								method: "PATCH",
-								credentials: "include",
-							}
-						);
-					}
-				}
-				if (!eventData.isRecruiting) {
-					//全員をゲームページへ移動
-					router.replace(`/game/${eventData.game.id}`);
-				}
-			};
-			// if(eventSourceRef.current.onerror = () => {exit()})
-			return () => {
-				if (eventSourceRef.current) {
-					eventSourceRef.current.close();
-				}
-			};
-		} else {
-			setIsExist(true);
+		if (!Object.keys(props.matching).length) {
+			router.push("/matching");
 		}
+	}, []);
+	useEffect(() => {
+		eventSourceRef.current = new EventSource(
+			`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/participant`,
+			{
+				withCredentials: true,
+			}
+		);
+		eventSourceRef.current.onmessage = async ({ data }: MessageEvent) => {
+			const eventData: MatchingInUsersAndGame = JSON.parse(data);
+			// console.log(eventData.game.scene)
+
+			if (!Object.keys(eventData).length) {
+				setIsExist(true);
+				return;
+			}
+			if (JSON.stringify(eventData.players) !== JSON.stringify(players)) {
+				//データに差分があれば
+				setPlayers(eventData.players);
+			}
+			// hostGuard(props.matching.hostPlayer.id, props.mePlayer.id, async function () {
+			// 	if (players.length === props.matching.game.rule.playerCount) {
+			// 		//満員になったら
+			// 		await fetch(
+			// 			`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/close`,
+			// 			{
+			// 				method: "PATCH",
+			// 				credentials: "include",
+			// 			}
+			// 		);
+			// 	}
+			// });
+
+			if (props.matching.hostPlayer.id === props.mePlayer.id) {
+				//ホストのクライアントのみ実行する処理
+				if (players.length === props.matching.game.rule.playerCount) {
+					//満員になったら
+					await fetch(
+						`${process.env.NEXT_PUBLIC_BACKEND_URL}/matching/${props.matching.id}/close`,
+						{
+							method: "PATCH",
+							credentials: "include",
+						}
+					);
+				}
+			}
+			// console.log(!eventData.isRecruiting)
+			if (!eventData.isRecruiting) {
+				//全員をゲームページへ移動
+				router.push(`/game/${eventData.game.id}`);
+			}
+		};
+		// if(eventSourceRef.current.onerror = () => {exit()})
+		return () => {
+			if (eventSourceRef.current) {
+				eventSourceRef.current.close();
+			}
+		};
+		// } else {
+		// 	setIsExist(true);
+		// }
 	}, [players, eventSourceRef.current]);
 
 	if (isExist) {
 		return (
-			<Container xs>
-				<Link href="/matching">
-					<Button auto rounded>
-						部屋一覧
-					</Button>
-				</Link>
-				<Spacer />
-				<Card>
-					<Card.Header>
-						<Text weight="bold" size="$lg" css={{ margin: "0 auto" }}>
-							部屋がありません
-						</Text>
-					</Card.Header>
-					<Card.Body>
-						<Text>部屋が存在しないか、ホストによって削除されました。</Text>
-					</Card.Body>
-				</Card>
-			</Container>
+			<>
+				<Header />
+				<Container xs>
+					<Link href="/matching">
+						<Button auto rounded>
+							部屋一覧
+						</Button>
+					</Link>
+					<Spacer />
+					<Card>
+						<Card.Header>
+							<Text b size="$lg" css={{ margin: "0 auto" }}>
+								部屋がありません
+							</Text>
+						</Card.Header>
+						<Card.Body>
+							<Text>部屋が存在しないか、ホストによって削除されました。</Text>
+						</Card.Body>
+					</Card>
+				</Container>
+			</>
 		);
 	} else {
 		return (
 			<>
 				{/* <AuthGuard> */}
+				<Header />
+
 				<Container xs>
 					<Tooltip
 						content="ホストが抜けるか人数が0になったら部屋が消えます"
@@ -154,7 +154,7 @@ export default function MatchingRoom(props: Props) {
 					<Spacer />
 					<Card>
 						<Card.Body>
-							<Text size="$xl" weight="bold" css={{ textAlign: "center" }}>
+							<Text size="$xl" b css={{ textAlign: "center" }}>
 								{props.matching.name}
 							</Text>
 
@@ -165,7 +165,7 @@ export default function MatchingRoom(props: Props) {
 										<Grid.Container>
 											<Grid css={{ d: "flex" }}>
 												{player.id === props.matching.hostPlayer.id ? (
-													<Badge size="xs" color="primary" content="ホスト">
+													<Badge size="xs" placement="top-left" color="primary" content="ホスト">
 														<Avatar
 															size="lg"
 															color="primary"
@@ -226,6 +226,7 @@ export async function getServerSideProps({ params, req }: GetServerSidePropsCont
 		return { props: { mePlayer, matching } };
 	} catch (error) {
 		console.log(error);
-		return { props: {} };
+		return { props: { mePlayer: {}, matching: {} } };
+		// return { props: {} };
 	}
 }

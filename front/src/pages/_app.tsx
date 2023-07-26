@@ -29,14 +29,14 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 		>
 			<NextUIProvider>
 				<QueryClientProvider client={queryClient}>
-					<ReactQueryDevtools />
-					<SessionProvider session={session}>
-						{/* <RecoilRoot> */}
-						<Layout>
-							<Component {...pageProps} />
-						</Layout>
-						{/* </RecoilRoot> */}
-					</SessionProvider>
+				<ReactQueryDevtools />
+				<SessionProvider session={session}>
+					{/* <RecoilRoot> */}
+					<Layout>
+						<Component {...pageProps} />
+					</Layout>
+					{/* </RecoilRoot> */}
+				</SessionProvider>
 				</QueryClientProvider>
 			</NextUIProvider>
 		</ThemeProvider>

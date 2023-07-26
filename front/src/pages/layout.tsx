@@ -8,17 +8,20 @@ type Props = {
 };
 
 export default function Layout(props: Props) {
-	const {status} = useSession()
+	const { status } = useSession();
 
 	useEffect(() => {
-		if(status === 'unauthenticated'){
-			signOut()
+		if (status === "unauthenticated") {
+			signOut();
 		}
-	}, [])
+	}, []);
 	return (
 		<>
-			<Header />
-			<AuthGuard>{props.children}</AuthGuard>
+			{/* <div style={{ maxHeight: "100vh", minHeight: "100vh" }}> */}
+			<div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+				{/* <Header /> */}
+				<AuthGuard>{props.children}</AuthGuard>
+			</div>
 		</>
 	);
 }

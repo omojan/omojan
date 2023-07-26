@@ -2,6 +2,7 @@ import { Loading, Button, Text, Grid, Spacer } from "@nextui-org/react";
 
 import { signIn, signOut, useSession } from "next-auth/react";
 import { ReactNode } from "react";
+import Header from "../util/Header";
 
 type Props = {
 	children: ReactNode;
@@ -11,22 +12,26 @@ export default function AuthGuard(props: Props) {
 
 	if (status === "loading") {
 		return (
-			<Grid.Container justify="center">
-				<Grid xs={12} md={6} justify="center">
-					<Loading type="points" size="lg">
-						Now Loading
-					</Loading>
-				</Grid>
-			</Grid.Container>
+			<>
+				<Header />
+				<Grid.Container justify="center">
+					<Grid xs={12} md={6} justify="center">
+						<Loading type="points" size="lg">
+							Now Loading
+						</Loading>
+					</Grid>
+				</Grid.Container>
+			</>
 		);
 	} else if (status === "authenticated") {
 		return <>{props.children}</>;
 	} else {
 		return (
 			<>
+				<Header />
 				<Grid.Container>
 					<Grid md={12} justify="center">
-						<Text size="$xl" weight="bold" color="warning">
+						<Text size="$xl" b color="warning">
 							サインインしていません。サインインしてください。
 						</Text>
 					</Grid>
